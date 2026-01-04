@@ -1,14 +1,13 @@
-import { useState } from "react";
-import { Container, Form, Button, Alert } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
+// src/pages/AdminLogin.jsx
 
-export default function AdminLogin() {
+import { useState } from "react";
+import { apiRequest } from "../services/api";
+
+const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -16,74 +15,54 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/admin/login`, {
+      const data = await apiRequest("/admin/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Login failed");
+      // Example: store token if returned
+      if (data.token) {
+        localStorage.setItem("adminToken", data.token);
       }
 
-      // ✅ Save token
-      localStorage.setItem("adminToken", data.token);
-
-      // ✅ Redirect to admin dashboard
-      navigate("/admin");
+      // Redirect or success logic here
+      console.log("Admin logged in:", data);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Login failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="admin-login-wrapper">
-      <div className="admin-login-card">
-        <h2 className="admin-login-title">Admin Login</h2>
-        <p className="admin-login-subtitle">
-          Restricted access. Authorized personnel only.
-        </p>
+    <div>
+      <h2>Admin Login</h2>
 
-        {error && <Alert variant="danger">{error}</Alert>}
+      {error && <p style={{ color: "red" }}>{error}</p>}
 
-        <Form onSubmit={handleSubmit}>
-          <Form.Group className="mb-3">
-            <Form.Label>Email</Form.Label>
-            <Form.Control
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="admin@bookstore.com"
-            />
-          </Form.Group>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
 
-          <Form.Group className="mb-4">
-            <Form.Label>Password</Form.Label>
-            <Form.Control
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="••••••••"
-            />
-          </Form.Group>
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
 
-          <Button
-            type="submit"
-            className="admin-login-btn-submit"
-            disabled={loading}
-          >
-            {loading ? "Logging in..." : "Login"}
-          </Button>
-        </Form>
-      </div>
+        <button type="submit" disabled={loading}>
+          {loading ? "Logging in..." : "Login"}
+        </button>
+      </form>
     </div>
   );
-}
+};
+
+export default AdminLogin;
